@@ -1,0 +1,106 @@
+--- a/torchrl/envs/libs/vmas.py
++++ b/torchrl/envs/libs/vmas.py
+@@ -19,6 +19,8 @@
+ from torchrl.envs.common import _EnvWrapper, EnvBase
+ from torchrl.envs.libs.gym import _gym_to_torchrl_spec_transform, set_gym_backend
+ from torchrl.envs.utils import _classproperty, _selective_unsqueeze
++
++from torch.distributions import Categorical
+ 
+ _has_vmas = importlib.util.find_spec("vmas") is not None
+ 
+@@ -343,6 +345,8 @@
+             device=self.device,
+         )
+ 
++        # tensordict_out['agents', 'attn'] = torch.tensor([1/self.n_agents]).repeat(tensordict_out.batch_size[0],self.n_agents,self.n_agents)
++
+         return tensordict_out
+ 
+     def _step(
+@@ -361,6 +365,18 @@
+             agent_obs = self.read_obs(obs[i])
+             agent_rew = self.read_reward(rews[i])
+             agent_info = self.read_info(infos[i])
++
++            # attn_probs = tensordict.get(("agents", "attn"), None)
++            # if attn_probs is None:
++            #     tensordict['agents', 'attn'] = torch.tensor([1/self.n_agents]).repeat(tensordict.batch_size[0],self.n_agents,self.n_agents)
++            #     attn_probs = tensordict.get(("agents", "attn"), None)
++            #     attn_entropy = 0
++            # if attn_probs is not None:
++            #     attn_entropy = Categorical(probs=attn_probs).entropy()[:, i, None]
++            #     attn_entropy = attn_entropy/attn_entropy.shape[0]
++
++            # agent_rew = -attn_entropy + agent_rew
++            # agent_obs = torch.cat((agent_obs, attn_entropy), -1)
+ 
+             agent_td = TensorDict(
+                 source={
+--- a/torchrl/modules/tensordict_module/exploration.py
++++ b/torchrl/modules/tensordict_module/exploration.py
+@@ -90,6 +90,9 @@
+         eps_end: float = 0.1,
+         annealing_num_steps: int = 1000,
+         *,
++        add_gauss: bool = False,
++        mean: float = 0.0,
++        std: float = 1.0,
+         action_key: Optional[NestedKey] = "action",
+         action_mask_key: Optional[NestedKey] = None,
+     ):
+@@ -109,6 +112,9 @@
+             raise RuntimeError("eps should decrease over time or be constant")
+         self.annealing_num_steps = annealing_num_steps
+         self.register_buffer("eps", torch.tensor([eps_init]))
++        self.register_buffer("mean", torch.tensor([mean]))
++        self.register_buffer("std", torch.tensor([std]))
++        self.add_gauss = add_gauss
+ 
+         if spec is not None:
+             if not isinstance(spec, CompositeSpec) and len(self.out_keys) >= 1:
+@@ -135,8 +141,26 @@
+                     self.eps - (self.eps_init - self.eps_end) / self.annealing_num_steps
+                 ).item(),
+             )
++    
++    def _add_noise(self, action: torch.Tensor) -> torch.Tensor:
++        sigma = self.eps.item()
++        noise = torch.normal(
++            mean=torch.ones(action.shape) * self.mean.item(),
++            std=torch.ones(action.shape) * self.std.item(),
++        ).to(action.device)
++        action = action + noise * sigma
++        spec = self.spec[self.action_key]
++        action = spec.project(action)
++        return action
++
+ 
+     def forward(self, tensordict: TensorDictBase) -> TensorDictBase:
++        if self.add_gauss:
++            if exploration_type() is ExplorationType.RANDOM or exploration_type() is None:
++                out = tensordict.get(self.action_key)
++                out = self._add_noise(out)
++                tensordict.set(self.action_key, out)
++            return tensordict
+         if exploration_type() == ExplorationType.RANDOM or exploration_type() is None:
+             if isinstance(self.action_key, tuple) and len(self.action_key) > 1:
+                 action_tensordict = tensordict.get(self.action_key[:-1])
+--- a/torchrl/objectives/ppo.py
++++ b/torchrl/objectives/ppo.py
+@@ -665,6 +665,15 @@
+             loss_critic = self.loss_critic(tensordict)
+             td_out.set("loss_critic", loss_critic.mean())
+         td_out.set("ESS", ess.mean() / batch)
++        attn_probs = tensordict.get(("agents", "attn"), None)
++        if attn_probs is None:
++            tensordict['agents', 'attn'] = torch.tensor([1/self.n_agents]).repeat(tensordict.batch_size[0],self.n_agents,self.n_agents)
++            attn_probs = tensordict.get(("agents", "attn"), None)
++            attn_entropy = 0
++        if attn_probs is not None:
++            attn_entropy = d.Categorical(probs=attn_probs).entropy()
++            attn_entropy = attn_entropy.nanmean()/attn_entropy.shape[0]
++            td_out.set("loss_attn", attn_entropy)
+         return td_out
+ 
+ 

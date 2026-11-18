@@ -1,0 +1,1 @@
+from .multiagent_models import MultiAgentGNN

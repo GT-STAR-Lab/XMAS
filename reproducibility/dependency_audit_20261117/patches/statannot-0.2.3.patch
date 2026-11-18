@@ -1,0 +1,10 @@
+--- a/statannot/statannot.py
++++ b/statannot/statannot.py
+@@ -467,6 +467,7 @@
+ 
+     # Build the list of box data structure pairs
+     box_struct_pairs = []
++    print('YIPPEE: ', box_names)
+     for i_box_pair, (box1, box2) in enumerate(box_pairs):
+         valid = box1 in box_names and box2 in box_names
+         if not valid:

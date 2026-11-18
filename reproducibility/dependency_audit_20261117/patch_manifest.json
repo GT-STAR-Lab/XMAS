@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "packages": [
+    {
+      "name": "torchrl",
+      "version": "0.2.0",
+      "wheel_filename": "torchrl-0.2.0-cp311-cp311-manylinux1_x86_64.whl",
+      "wheel_sha256": "b4d4d8b3cc1aa1b1a2610fcec15491e0f1ca50b629b58add27163830d9611758",
+      "patch": "patches/torchrl-0.2.0.patch",
+      "patch_sha256": "09a2caf9d2c8472c9cdc37b3fdab9747c07d84382b897a96d5e0ee459a859787",
+      "files": [
+        {
+          "relative_path": "torchrl/envs/libs/vmas.py",
+          "before_sha256": "5df09b2fe6dc8c689fd82507aa589ad150ab704395719afff477bafc0387b112",
+          "after_sha256": "265d74c8cdb1a3d073508b5f70abc5270b6578c974009fcd72ee37d1f32c7bdb",
+          "snapshot": "modified_sources/torchrl/torchrl/envs/libs/vmas.py",
+          "pristine_wheel_matches_original_install_record": true
+        },
+        {
+          "relative_path": "torchrl/modules/tensordict_module/exploration.py",
+          "before_sha256": "20a59630d5634f1171feac9c1797421f69d89a88e4a05f47de25f23d3cdf7e2b",
+          "after_sha256": "12777341020686f8cdbf00057123bdc37450931b2a9b10c00396bf007ec01973",
+          "snapshot": "modified_sources/torchrl/torchrl/modules/tensordict_module/exploration.py",
+          "pristine_wheel_matches_original_install_record": true
+        },
+        {
+          "relative_path": "torchrl/objectives/ppo.py",
+          "before_sha256": "443392a19dd3ba719dd04894b70fa4e687c81fd0e1592dbe31f9be69c5d260d3",
+          "after_sha256": "51e72ee280b34c7fc00f14bd5b35aa84d43d043fafb6f62d74e16571640c6ec3",
+          "snapshot": "modified_sources/torchrl/torchrl/objectives/ppo.py",
+          "pristine_wheel_matches_original_install_record": true
+        }
+      ]
+    },
+    {
+      "name": "torch-geometric",
+      "version": "2.4.0",
+      "wheel_filename": "torch_geometric-2.4.0-py3-none-any.whl",
+      "wheel_sha256": "9d8eb5eec44382f4072aa5e835450f144e9edb9d164627e532e311880b6bdad0",
+      "patch": "patches/torch-geometric-2.4.0.patch",
+      "patch_sha256": "e761754b4db00f19029711581d2e71d88e9e447470ad53a2823d983212faa424",
+      "files": [
+        {
+          "relative_path": "torch_geometric/explain/algorithm/attention_explainer.py",
+          "before_sha256": "ec251bbc8641ba5e11cb1f2144c6ce380ef23a6295fe10a2490fd6e43946a4a7",
+          "after_sha256": "fae014444d85aa7641f822f99b3982c1b1bb9a5f0adcff67cb59f8edef9601fa",
+          "snapshot": "modified_sources/torch-geometric/torch_geometric/explain/algorithm/attention_explainer.py",
+          "pristine_wheel_matches_original_install_record": true
+        },
+        {
+          "relative_path": "torch_geometric/explain/algorithm/gnn_explainer.py",
+          "before_sha256": "ed324d7f2545b371f22e2e535a3fa472f823245166e2e34e5356125a92d8dbe8",
+          "after_sha256": "347f555c6da90bd01f16db336e9661cef8fc527f1ab8fb793e22a567a5ef6163",
+          "snapshot": "modified_sources/torch-geometric/torch_geometric/explain/algorithm/gnn_explainer.py",
+          "pristine_wheel_matches_original_install_record": true
+        },
+        {
+          "relative_path": "torch_geometric/explain/algorithm/graphmask_explainer.py",
+          "before_sha256": "85bdef7a63a8f1ea8045dbfb43c86280c6c82f89c1205977bb1004bcb84c67c9",
+          "after_sha256": "da1670e184f5b2be75e216472278a21f86adcf0fa7812d59537d517ed5bd14ae",
+          "snapshot": "modified_sources/torch-geometric/torch_geometric/explain/algorithm/graphmask_explainer.py",
+          "pristine_wheel_matches_original_install_record": true
+        },
+        {
+          "relative_path": "torch_geometric/explain/explanation.py",
+          "before_sha256": "074f764c195e0cc2b4386c2015ab16c4e28c1d173307de1cd19c4a3392b697c1",
+          "after_sha256": "24383fee606de7003e5e9790f443e61ff930f9ab39fb393f076a5f6a54ea0bfd",
+          "snapshot": "modified_sources/torch-geometric/torch_geometric/explain/explanation.py",
+          "pristine_wheel_matches_original_install_record": true
+        },
+        {
+          "relative_path": "torch_geometric/explain/metric/fidelity.py",
+          "before_sha256": "c3e5f8df80f6d3234579beff91cc717b86021f0407223561a54e2d23d5ce7825",
+          "after_sha256": "e740c41a1677662b73c0fea8206dd082a6f689794da06a696e661c8337be25b1",
+          "snapshot": "modified_sources/torch-geometric/torch_geometric/explain/metric/fidelity.py",
+          "pristine_wheel_matches_original_install_record": true
+        },
+        {
+          "relative_path": "torch_geometric/visualization/graph.py",
+          "before_sha256": "01efc2c5dda6aad29360cb05a696d41458ccf19fe854035a239e4a868c1e66b8",
+          "after_sha256": "11b038646a83677b602d78b530b273555ba39b9f19bd5ef6e550615446526080",
+          "snapshot": "modified_sources/torch-geometric/torch_geometric/visualization/graph.py",
+          "pristine_wheel_matches_original_install_record": true
+        }
+      ]
+    },
+    {
+      "name": "statannot",
+      "version": "0.2.3",
+      "wheel_filename": "statannot-0.2.3-py3-none-any.whl",
+      "wheel_sha256": "17745a40542e157e3f147147425c5da441f62bb698b3644154cedf088d4d0b08",
+      "patch": "patches/statannot-0.2.3.patch",
+      "patch_sha256": "667a62de987574fd210b5d90de70e7664621f05544b819d1f35373840768ad8e",
+      "files": [
+        {
+          "relative_path": "statannot/statannot.py",
+          "before_sha256": "3cc520458ec2453d79ece0ea4230e44f6f03f848173f41db1934951712e51d95",
+          "after_sha256": "d83ed6b0ee15e233afd7ac730eb41417897f0bd63f1841775456ea077e78e209",
+          "snapshot": "modified_sources/statannot/statannot/statannot.py",
+          "pristine_wheel_matches_original_install_record": true
+        }
+      ]
+    }
+  ],
+  "numpy_scipy_config_note": "Their RECORD differences match Conda's sha256_in_prefix; do not patch these generated configs."
+}

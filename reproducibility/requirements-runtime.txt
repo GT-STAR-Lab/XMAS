@@ -1,0 +1,24 @@
+# Observed direct dependencies for the paper training/evaluation scripts.
+# Python 3.11; captured interpreter: 3.11.5.
+# This is not a complete transitive or native-library lock.
+# Captured PyTorch build: 2.1.1+cu121. Select matching compiled PyG wheels
+# separately when reproducing that GPU environment; see README.md.
+torch==2.1.1
+tensordict==0.2.1
+torchrl==0.2.0
+torch-geometric==2.4.0
+numpy==1.26.0
+scipy==1.11.3
+matplotlib==3.8.0
+seaborn==0.12.2
+pandas==2.1.1
+networkx==3.2.1
+gym==0.26.2
+pyglet==1.5.27
+Pillow==10.0.1
+imageio==2.32.0
+PyVirtualDisplay==3.0
+tqdm==4.65.0
+
+# Used by the original paper plotting script.
+statannot==0.2.3

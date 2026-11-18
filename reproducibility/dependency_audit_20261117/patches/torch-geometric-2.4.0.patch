@@ -1,0 +1,189 @@
+--- a/torch_geometric/explain/algorithm/attention_explainer.py
++++ b/torch_geometric/explain/algorithm/attention_explainer.py
+@@ -55,6 +55,8 @@
+                 alphas.append(msg_kwargs[0]['alpha'].detach())
+             elif getattr(module, '_alpha', None) is not None:
+                 alphas.append(module._alpha.detach())
++            elif getattr(module, 'alpha', None) is not None:
++                alphas.append(module.alpha.detach())
+ 
+         hook_handles = []
+         for module in model.modules():  # Register message forward hooks:
+--- a/torch_geometric/explain/algorithm/gnn_explainer.py
++++ b/torch_geometric/explain/algorithm/gnn_explainer.py
+@@ -126,6 +126,10 @@
+ 
+             loss.backward()
+             optimizer.step()
++
++            # print(loss)
++            # if i == self.epochs-2:
++                # print(loss)
+ 
+             # In the first iteration, we collect the nodes and edges that are
+             # involved into making the prediction. These are all the nodes and
+@@ -144,6 +148,7 @@
+                                      "via message passing inside the model or "
+                                      "disable it via `edge_mask_type=None`.")
+                 self.hard_edge_mask = self.edge_mask.grad != 0.0
++        # print(loss)
+ 
+     def _initialize_masks(self, x: Tensor, edge_index: Tensor):
+         node_mask_type = self.explainer_config.node_mask_type
+--- a/torch_geometric/explain/algorithm/graphmask_explainer.py
++++ b/torch_geometric/explain/algorithm/graphmask_explainer.py
+@@ -77,7 +77,7 @@
+     coeffs = {
+         'node_feat_size': 1.0,
+         'node_feat_reduction': 'mean',
+-        'node_feat_ent': 0.1,
++        'node_feat_ent': 0.1*10,
+         'EPS': 1e-15,
+     }
+ 
+@@ -91,7 +91,7 @@
+         init_lambda: int = 0.55,
+         allowance: int = 0.03,
+         allow_multiple_explanations: bool = False,
+-        log: bool = True,
++        log: bool = False,
+         **kwargs,
+     ):
+         super().__init__()
+@@ -240,8 +240,8 @@
+         baselines = torch.nn.ParameterList(baselines)
+         self.baselines = baselines
+ 
+-        for parameter in self.parameters():
+-            parameter.requires_grad = False
++        # for parameter in self.parameters():
++        #     parameter.requires_grad = False
+ 
+     def _enable_layer(self, layer: int):
+         r"""Enables the input layer's edge mask."""
+@@ -450,6 +450,8 @@
+ 
+                 loss = self._loss(y_hat, y, total_penalty)
+ 
++                # print(loss)
++
+                 loss.backward()
+                 optimizer.step()
+                 self.lambda_op.grad *= -1
+--- a/torch_geometric/explain/explanation.py
++++ b/torch_geometric/explain/explanation.py
+@@ -230,7 +230,7 @@
+         return _visualize_score(score, feat_labels, path, top_k)
+ 
+     def visualize_graph(self, path: Optional[str] = None,
+-                        backend: Optional[str] = None):
++                        backend: Optional[str] = None, env=None):
+         r"""Visualizes the explanation graph with edge opacity corresponding to
+         edge importance.
+ 
+@@ -249,7 +249,7 @@
+             raise ValueError(f"The attribute 'edge_mask' is not available "
+                              f"in '{self.__class__.__name__}' "
+                              f"(got {self.available_explanations})")
+-        visualize_graph(self.edge_index, edge_mask, path, backend)
++        visualize_graph(self.edge_index, edge_mask, path, backend, env=env)
+ 
+ 
+ class HeteroExplanation(HeteroData, ExplanationMixin):
+--- a/torch_geometric/explain/metric/fidelity.py
++++ b/torch_geometric/explain/metric/fidelity.py
+@@ -47,8 +47,8 @@
+         explainer (Explainer): The explainer to evaluate.
+         explanation (Explanation): The explanation to evaluate.
+     """
+-    if explainer.model_config.mode == ModelMode.regression:
+-        raise ValueError("Fidelity not defined for 'regression' models")
++    # if explainer.model_config.mode == ModelMode.regression:
++    #     raise ValueError("Fidelity not defined for 'regression' models")
+ 
+     node_mask = explanation.get('node_mask')
+     edge_mask = explanation.get('edge_mask')
+@@ -96,6 +96,16 @@
+                         (complement_y_hat == y).float()).abs().mean()
+         neg_fidelity = ((y_hat == y).float() -
+                         (explain_y_hat == y).float()).abs().mean()
++    
++    if explainer.model_config.mode == ModelMode.regression:
++        # raise ValueError("Fidelity not defined for 'regression' models")
++        if explainer.explanation_type == ExplanationType.model:
++            pos_fidelity = (complement_y_hat - y).float().abs().mean()
++            neg_fidelity = (explain_y_hat - y).float().abs().mean()
++        else:
++            # pos_fidelity = ((y_hat == y).float() - (complement_y_hat == y).float()).abs().mean()
++            # neg_fidelity = ((y_hat == y).float() - (explain_y_hat == y).float()).abs().mean()
++            ValueError("Fidelity not defined for 'regression phenomenon' models")
+ 
+     return float(pos_fidelity), float(neg_fidelity)
+ 
+@@ -128,8 +138,8 @@
+         raise ValueError(f"The weights need to sum up to 1 "
+                          f"(got {pos_weight} and {neg_weight})")
+ 
+-    denom = (pos_weight / pos_fidelity) + (neg_weight / (1. - neg_fidelity))
+-    return 1. / denom
++    denom = (pos_weight / (pos_fidelity + torch.finfo(torch.float32).eps)) + (neg_weight / (1. - neg_fidelity + torch.finfo(torch.float32).eps))
++    return 1. / (denom + torch.finfo(torch.float32).eps)
+ 
+ 
+ def fidelity_curve_auc(
+--- a/torch_geometric/visualization/graph.py
++++ b/torch_geometric/visualization/graph.py
+@@ -3,6 +3,8 @@
+ 
+ import torch
+ from torch import Tensor
++
++import numpy as np
+ 
+ BACKENDS = {'graphviz', 'networkx'}
+ 
+@@ -26,6 +28,7 @@
+     edge_weight: Optional[Tensor] = None,
+     path: Optional[str] = None,
+     backend: Optional[str] = None,
++    env=None
+ ) -> Any:
+     r"""Visualizes the graph given via :obj:`edge_index` and (optional)
+     :obj:`edge_weight`.
+@@ -58,7 +61,7 @@
+         backend = 'graphviz' if has_graphviz() else 'networkx'
+ 
+     if backend.lower() == 'networkx':
+-        return _visualize_graph_via_networkx(edge_index, edge_weight, path)
++        return _visualize_graph_via_networkx(edge_index, edge_weight, path, env=env)
+     elif backend.lower() == 'graphviz':
+         return _visualize_graph_via_graphviz(edge_index, edge_weight, path)
+ 
+@@ -98,6 +101,7 @@
+     edge_index: Tensor,
+     edge_weight: Tensor,
+     path: Optional[str] = None,
++    env=None
+ ) -> Any:
+     import matplotlib.pyplot as plt
+     import networkx as nx
+@@ -126,9 +130,18 @@
+                 connectionstyle="arc3,rad=0.1",
+             ),
+         )
++    
++    if len(g) == env.n_agents:
++        # node_colors = np.array([(0.22, 0.49, 0.72), (1.0, 0.5, 0), (0.3, 0.69, 0.29)])
++        if env.base_env.scenario_name == 'passage':
++            node_colors = np.array([env.world.entities[i]._color.value for i in range(env.n_agents)])
++        else:
++            node_colors = np.array([env.world.entities[i]._color for i in range(env.n_agents)])
++    else:
++        node_colors = 'white'
+ 
+     nodes = nx.draw_networkx_nodes(g, pos, node_size=node_size,
+-                                   node_color='white', margins=0.1)
++                                   node_color=node_colors, margins=0.1)
+     nodes.set_edgecolor('black')
+     nx.draw_networkx_labels(g, pos, font_size=10)
+ 

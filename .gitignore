@@ -1,0 +1,27 @@
+# Generated experiment artifacts and local environments
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.aws/
+.codex/
+.agents/
+/experiments/
+/outputs/
+/wandb/
+*.pth
+*.pt
+*.pkl
+*.npy
+*.npz
+*.log
+
+# Follow-up experiments and analyses are maintained separately
+/runs/
+/analysis_corrected/
+
+# Generated metric data is stored as separate research artifacts
+*_numbers.csv
+eval_metrics_rand_trials_envs_*.csv
